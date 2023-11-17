@@ -1,5 +1,3 @@
-package binom;
-
 public class Binom {
 	public static boolean quiet = false;
 	
@@ -29,8 +27,8 @@ public class Binom {
 	public static int expect(final int n, final double p, Event prob) {
 		double e = n * p;
 		if(Math.floor(e) != Math.ceil(e)) {
-			var floor = prob.prob(n, p, (int) e);
-			var ceil = prob.prob(n, p, (int) Math.ceil(e));
+			double floor = prob.prob(n, p, (int) e);
+			double ceil = prob.prob(n, p, (int) Math.ceil(e));
 			if(floor > ceil) return (int) e;
 			else return (int) Math.ceil(e);
 		}
@@ -48,8 +46,8 @@ public class Binom {
 		final int range = 10000;
 		int min = k, max = k + range;
 		for(double n = min + range / 2; n < k + range;) {
-			var possibs = Math.abs(min - max);
-			var prob = pdf((int) n, p, k);
+			int possibs = Math.abs(min - max);
+			double prob = pdf((int) n, p, k);
 			if(possibs <= 5)
 				println("n=" + (int) n + ", pdf(n, p, k)=" + prob);
 			
@@ -96,8 +94,8 @@ public class Binom {
 		for(double k = min + (max - min)/2;;) {
 			if((int) k == lastK) return lowestK;
 			lastK = (int) k;
-			var prob = pdf(n, p, (int) k);
-			var possibs = max - min;
+			double prob = pdf(n, p, (int) k);
+			int possibs = max - min;
 			if(possibs <= 5)
 				println("(" + (leftside ? "left" : "right") + ") k=" + (int) k + ", pdf(n, p, k)=" + prob);
 			if(prob <= P) {
@@ -125,8 +123,8 @@ public class Binom {
 		int min = k, max = k + range, lastN = -1, lowestN = -1;
 		for(double n = min + range / 2; n < k + range;) {
 			if((int) n == lastN) return lowestN;
-			var possibs = Math.abs(min - max);
-			var prob = cdf((int) n, p, k);
+			int possibs = Math.abs(min - max);
+			double prob = cdf((int) n, p, k);
 			if(possibs <= 5)
 				println("n=" + (int) n + ", cdf(n, p, k)=" + prob);
 			lastN = (int) n;
@@ -159,12 +157,12 @@ public class Binom {
 			if((int) k == lastK) return lowestK;
 			lastK = (int) k;
 			
-			var prob = cdf(n, p, (int) k);
-			var possibs = max - min;
+			double prob = cdf(n, p, (int) k);
+			int possibs = max - min;
 			if(possibs <= 5)
 				println("k=" + (int) k + ", cdf(n, p, k)=" + prob);
 			if(prob <= P) {
-				if(possibs <= 2)
+                if(possibs <= 2)
 					return (int) k;
 				lowestK = (int) k;
 				min = (int) Math.floor(k);

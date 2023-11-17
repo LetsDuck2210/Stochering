@@ -1,8 +1,6 @@
-package main;
-
 import java.util.Random;
-
-import binom.Binom;
+import java.util.Scanner;
+import java.lang.reflect.Method;
 
 public class Main {
 
@@ -13,11 +11,60 @@ public class Main {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println("PDF_n took " + (measure(Main::randPDF_n) / 1_000_000.0) + "ms");
-		System.out.println("PDF_k took " + (measure(Main::randPDF_k) / 1_000_000.0) + "ms");
-		System.out.println("CDF_n took " + (measure(Main::randCDF_n) / 1_000_000.0) + "ms");
-		System.out.println("CDF_k took " + (measure(Main::randCDF_k) / 1_000_000.0) + "ms");
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Functions: \n\tpdf(n, p, k) \n\tcdf(n, p, k) \n\treversePDF_n(p, k, P) \n\treverseCDF_n(p, k, P) \n\treversePDF_k(n, p, P) \n\treverseCDF_k(n, p, P)");
+
+        while(true) {
+            System.out.print("~ ");
+            String op = sc.nextLine().trim();
+            int paramOpen = op.indexOf('('), paramClose = op.indexOf(')');
+            
+            String func = op.substring(0, paramOpen);
+            String[] params = op.substring(paramOpen + 1, paramClose < 0 ? op.length() - 1 : paramClose).split(",");
+            for(int i = 0; i < params.length; i++)
+                params[i] = params[i].trim();
+            
+            Method[] methods = Binom.class.getMethods();
+            for(Method method : methods) {
+                if(method.getName().equals(func)) {
+                    Class<?>[] paramTypes = method.getParameterTypes();
+                    Object[] paramObjects = new Object[paramTypes.length];
+    
+                    if(paramTypes.length != params.length) {
+                        System.out.println("expected " + paramTypes.length + " arguments (got " + params.length + ")");
+                        return;
+                    }
+                    
+                    for(int i = 0; i < paramTypes.length; i++) {
+                        paramObjects[i] = parseParam(params[i], paramTypes[i]);
+                        if(paramObjects[i] == null) {
+                            System.out.println("couldn't parse '" + params[i] + "' as " + paramTypes[i]);
+                            return;
+                        }
+                    }
+    
+                    try {
+                        System.out.println(method.invoke(null, paramObjects));
+                    } catch(Exception e) {
+                        System.out.println("couldn't invoke method: " + e.getMessage());
+                    }
+                }
+            }
+        }
 	}
+
+    public static Object parseParam(String givenParam, Class<?> clazz) {
+        try {
+            if(double.class.isAssignableFrom(clazz) || Double.class.isAssignableFrom(clazz))
+                return Double.parseDouble(givenParam);
+            if(int.class.isAssignableFrom(clazz) || Integer.class.isAssignableFrom(clazz))
+                return Integer.parseInt(givenParam);
+        } catch(Exception e) {
+            return null;
+        }
+        return null;
+    }
 	
 	public static void randPDF_n() {
 		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
