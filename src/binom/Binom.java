@@ -1,3 +1,5 @@
+package binom;
+
 public class Binom {
 	public static boolean quiet = false;
 	
@@ -39,7 +41,7 @@ public class Binom {
 	 * @param p probability of a single success
 	 * @param k amount of successes expected
 	 * @param P expected probability of event
-	 * @return n amount of turns required
+	 * @return n: amount of turns required
 	 */
 	public static int reversePDF_n(final double p, final int k, final double P) {
 		println("started reversePDF_n with p=" + p + ", k=" + k + ", P=" + P);
@@ -71,10 +73,11 @@ public class Binom {
 	}
 
 	/**
-	 * attempts to find p for P(X = k) <= P
+	 * attempts to find k for P(X = k) <= P
 	 * @param n number of trials
 	 * @param p probability of a single success
 	 * @param P max probability of event
+	 * @return k: list of minimum required successes 
 	 */
 	public static int[] reversePDF_k(final int n, final double p, final double P) {
 		println("started reversePDF_k with n=" + n + ", p=" + p + ", P=" + P);
@@ -90,9 +93,9 @@ public class Binom {
 		
 		int min = leftside ? 0 : expect;
 		int max = leftside ? expect : n;
-		int lastK = -1, lowestK = -1;
+		int lastK = -1, nearestK = -1;
 		for(double k = min + (max - min)/2;;) {
-			if((int) k == lastK) return lowestK;
+			if((int) k == lastK) return nearestK;
 			lastK = (int) k;
 			double prob = pdf(n, p, (int) k);
 			int possibs = max - min;
@@ -101,7 +104,7 @@ public class Binom {
 			if(prob <= P) {
 				if(possibs <= 2)
 					return (int) k;
-				lowestK = (int) k;
+				nearestK = (int) k;
 				min = (int) Math.floor(k);
 				k += (max - k) / 2;
 			} else {
@@ -110,19 +113,51 @@ public class Binom {
 			}
 		}
 	}
+	/**
+	 * attempts to find p for P(X = k) <= P
+	 * 
+	 * @param n number of trials
+	 * @param k amount of successes expected
+	 * @param P max probability of event
+	 * @param accuracy number of digits 
+	 * @return p: approximate probability required per event
+	 * 
+	 */
+	public static double reversePDF_p(final int n, final int k, final double P, final int accuracy) {
+		double 	min = 0, max = 1,
+				lastP = -1, nearestP = -1;
+		
+		for(double p = 0.5;;) {
+			double 	rounded = Math.round(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
+					floored = (int)(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
+					ceiled = Math.ceil(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy);
+			if(p == lastP) return nearestP;
+			lastP = rounded;
+			double prob = pdf(n, p, k);
+			if(prob >= P) {
+				if(rounded == nearestP) return rounded;
+				nearestP = rounded;
+				min = floored;
+				p += (max - p) / 2;
+			} else {
+				max = ceiled;
+				p -= (p - min) / 2;
+			}
+		}
+	}
 	
 	/** attempts to find n for P(X <= k) <= P
 	 * @param p probability of a single success
 	 * @param k amount of successes expected
 	 * @param P max probability of event
-	 * @return n amount of turns required
+	 * @return n: number of trials required
 	 */
 	public static int reverseCDF_n(final double p, final int k, final double P) {
 		println("started reverseCDF_n with p=" + p + ", k=" + k + ", P=" + P);
 		final int range = 10000;
-		int min = k, max = k + range, lastN = -1, lowestN = -1;
+		int min = k, max = k + range, lastN = -1, nearestN = -1;
 		for(double n = min + range / 2; n < k + range;) {
-			if((int) n == lastN) return lowestN;
+			if((int) n == lastN) return nearestN;
 			int possibs = Math.abs(min - max);
 			double prob = cdf((int) n, p, k);
 			if(possibs <= 5)
@@ -131,7 +166,7 @@ public class Binom {
 			if(prob <= P) {
 				if(possibs <= 2)
 					return (int) n;
-				lowestN = (int) n;
+				nearestN = (int) n;
 				max = (int) Math.ceil(n); 
 				n -= (n - min) / 2;
 			} else {
@@ -142,19 +177,20 @@ public class Binom {
 		return -1;
 	}
 	/**
-	 * attempts to find p for P(X = k) <= P
+	 * attempts to find k for P(X <= k) <= P
 	 * @param n number of trials
 	 * @param p probability of a single success
 	 * @param P max probability of event
+	 * @return k: minimum amount of successes
 	 */
 	public static int reverseCDF_k(final int n, final double p, final double P) {
 		println("started reverseCDF_k with n=" + n + ", p=" + p + ", P=" + P);
 		if(n == 0) return 0;
 		
 		int min = 0, max = n,
-			lastK = -1, lowestK = -1;
+			lastK = -1, nearestK = -1;
 		for(double k = min + (max - min)/2;;) {
-			if((int) k == lastK) return lowestK;
+			if((int) k == lastK) return nearestK;
 			lastK = (int) k;
 			
 			double prob = cdf(n, p, (int) k);
@@ -164,7 +200,7 @@ public class Binom {
 			if(prob <= P) {
                 if(possibs <= 2)
 					return (int) k;
-				lowestK = (int) k;
+				nearestK = (int) k;
 				min = (int) Math.floor(k);
 				k += (max - k) / 2;
 			} else {
@@ -174,6 +210,38 @@ public class Binom {
 		}
 	}
 	
+	/**
+	 * attempts to find p for P(X <= k) <= P
+	 * 
+	 * @param n number of trials
+	 * @param k amount of successes expected
+	 * @param P max probability of event
+	 * @param accuracy number of digits 
+	 * @return p: approximate probability required per event
+	 * 
+	 */
+	public static double reverseCDF_p(final int n, final int k, final double P, final int accuracy) {
+		double 	min = 0, max = 1,
+				lastP = -1, nearestP = -1;
+		
+		for(double p = 0.5;;) {
+			double 	rounded = Math.round(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
+					floored = (int)(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
+					ceiled = Math.ceil(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy);
+			if(p == lastP) return nearestP;
+			lastP = rounded;
+			double prob = cdf(n, p, k);
+			if(prob >= P) {
+				if(rounded == nearestP) return rounded;
+				nearestP = rounded;
+				min = floored;
+				p += (max - p) / 2;
+			} else {
+				max = ceiled;
+				p -= (p - min) / 2;
+			}
+		}
+	}
 	
 	
 	private static void println(String info) {
