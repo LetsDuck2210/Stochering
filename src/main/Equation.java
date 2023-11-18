@@ -4,16 +4,16 @@ import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		ADD("+", (a, b) -> a+b), SUB("-", (a, b) -> a-b), MULT("*", (a, b) -> a*b), DIV("/", (a,b) -> a/b), NOP("", (a,b) -> 0.0);
+		MULT('*', (a, b) -> a*b), DIV('/', (a,b) -> a/b), SUB('-', (a, b) -> a-b), ADD('+', (a, b) -> a+b), NOP('\0', (a,b) -> 0.0);
 		
-		private final String str;
+		private final char str;
 		private final BiFunction<Double, Double, Double> applyF;
-		private Operation(String str, BiFunction<Double, Double, Double> applyF) {
-			this.str = str;
+		private Operation(char c, BiFunction<Double, Double, Double> applyF) {
+			this.str = c;
 			this.applyF = applyF;
 			
 		}
-		public String toString() {
+		public char character() {
 			return str;
 		}
 		public double apply(double a, double b) {
@@ -21,7 +21,7 @@ public class Equation {
 		}
 	}
 	
-	private Operation operation;
+	private Operation operation = Operation.NOP;
 	private Equation left, right;
 	private String term, paramName;
 	public Equation(String term, String paramName) {
@@ -32,17 +32,44 @@ public class Equation {
 			left = right = null;
 			return;
 		}
-		int opIndex = -1;
-		for(Operation op : Operation.values()) {
-			int i = term.lastIndexOf(op.toString());
-			if(i < 0) continue;
-			opIndex = i;
-			operation = op;
-			break;
+		
+		int level = 0;
+		String left = "", right = "";
+		boolean parsingRight = false;
+		if(this.term.startsWith("(") && this.term.endsWith(")")) {
+			// cut '(' and ')' from start and end
+			this.term = term = this.term.substring(1, this.term.length() - 1);
 		}
-		if(opIndex < 0 || opIndex == term.length()) return;
-		left = new Equation(term.substring(0, opIndex), paramName);
-		right = new Equation(term.substring(opIndex + 1), paramName);
+		
+		outer:
+		for(int i = 0; i < term.length(); i++) {
+			char c = term.charAt(i);
+			if(Character.isWhitespace(c) || c == '\0') continue;
+			if(c == '(') level++;
+			if(c == ')') level--;
+			
+			if(level == 0) {
+				for(Operation op : Operation.values()) {
+					if(op.ordinal() < operation.ordinal() && operation != Operation.NOP) continue;
+					
+					if(op.character() == c) {
+						if(operation != Operation.NOP)
+							left += operation.character() + right;
+						operation = op;
+						parsingRight = true;
+						right = "";
+						continue outer;
+					}
+				}
+			}
+			if(parsingRight)
+				right += c;
+			else
+				left += c;
+		}
+		if(operation == Operation.NOP) return;
+		this.left = new Equation(left, paramName);
+		this.right = new Equation(right, paramName);
 	}
 	
 	public double evaluate(double param) {
