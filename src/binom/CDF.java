@@ -88,8 +88,7 @@ public class CDF {
 						P = new Equation(eq_P, paramName);
 		
 		int n0 = (int) n.evaluate(0);
-		double p0 = p.evaluate(0), P0 = P.evaluate(0);
-		println("started reverseCDF_k with n=" + n0 + ", p=" + p0 + ", P=" + P0);
+		println("started reverseCDF_k with n=" + n.getTerm() + ", p=" + p.getTerm() + ", P=" + P.getTerm());
 		if(n0 == 0) return 0;
 		
 		int lastK = -1, nearestK = -1;

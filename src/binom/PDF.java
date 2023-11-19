@@ -34,7 +34,7 @@ public class PDF {
 						k = new Equation(eq_k, paramName),
 						P = new Equation(eq_P, paramName);
 		
-		println("started reversePDF_n with p=" + p.evaluate(0) + ", k=" + (int) k.evaluate(0) + ", P=" + P);
+		println("started reversePDF_n with p=" + p.getTerm() + ", k=" + k.getTerm() + ", P=" + P.getTerm());
 		
 		for(double n = (min + max) / 2;;) {
 			double pEval = p.evaluate((int) n);
@@ -91,7 +91,7 @@ public class PDF {
 						p = new Equation(eq_p, paramName),
 						P = new Equation(eq_P, paramName);
 		
-		println("started reversePDF_k with n=" + (int) n.evaluate(0) + ", p=" + p.evaluate(0) + ", P=" + P.evaluate(0));
+		println("started reversePDF_k with n=" + n.getTerm() + ", p=" + p.getTerm() + ", P=" + P.getTerm());
 		if(n.evaluate(0) == 0) return new int[] {0};
 		int left = reversePDF_k_oneside(n, p, P, true, min, max);
 		int right = reversePDF_k_oneside(n, p, P, false, min, max);
