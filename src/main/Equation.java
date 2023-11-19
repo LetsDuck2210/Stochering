@@ -74,6 +74,9 @@ public class Equation {
 	public Equation(Number n) {
 		term = "" + n;
 	}
+	public String getTerm() {
+		return term;
+	}
 	
 	public double evaluate(double param) {
 		if(left != null && right != null)

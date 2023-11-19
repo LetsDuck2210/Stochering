@@ -31,11 +31,11 @@ public class Main {
 		String[] methodDefs = {
 			"cdf(n, p, k)",
 			"pdf(n, p, k)",
-			"reversePDF_n(p, k, P)",
-			"reversePDF_k(n, p, P)",
+			"reversePDF_n(p, k, P[, min, max])",
+			"reversePDF_k(n, p, P[, min, max])",
 			"reversePDF_p(n, k, P, accuracy)",
-			"reverseCDF_n(p, k, P)",
-			"reverseCDF_k(n, p, P)",
+			"reverseCDF_n(p, k, P[, min, max])",
+			"reverseCDF_k(n, p, P[, min, max])",
 			"reverseCDF_p(n, k, P, accuracy)"
 		};
 		
@@ -61,7 +61,7 @@ public class Main {
             Method[] methods = Binom.class.getMethods();
             Method matching = null;
             for(Method method : methods) {
-                if(matchesFuzzy(method.getName(), func)) {
+                if(matchesFuzzy(method.getName(), func) && method.getParameterCount() == params.length) {
                 	if(matching != null) {
                 		System.out.println("ambiguous function name: matches " + matching.getName() + " and " + method.getName());
                 		continue outer;
