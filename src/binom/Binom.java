@@ -1,5 +1,7 @@
 package binom;
 
+import main.Equation;
+
 public class Binom {
 	public static boolean quiet = false;
 	
@@ -37,29 +39,39 @@ public class Binom {
 		return (int) e;
 	}
 	
-	/** attempts to find n for P(X = k) <= P
-	 * @param p probability of a single success
-	 * @param k amount of successes expected
-	 * @param P expected probability of event
+	/** attempts to find n for P(X = k) <= P <br/>
+	 *  takes equations as strings
+	 * @param eq_p probability of a single success
+	 * @param eq_k amount of successes expected
+	 * @param eq_P expected probability of event
 	 * @return n: amount of turns required
 	 */
-	public static int reversePDF_n(final double p, final int k, final double P) {
-		println("started reversePDF_n with p=" + p + ", k=" + k + ", P=" + P);
+	public static int reversePDF_n(final String eq_p, final String eq_k, final String eq_P) {
+		final String paramName = "n";
+		final Equation 	p = new Equation(eq_p, paramName),
+						k = new Equation(eq_k, paramName),
+						P = new Equation(eq_P, paramName);
+		
+		println("started reversePDF_n with p=" + p.evaluate(0) + ", k=" + (int) k.evaluate(0) + ", P=" + P);
 		final int range = 10000;
-		int min = k, max = k + range;
-		for(double n = min + range / 2; n < k + range;) {
+		int min = (int) k.evaluate(0), max = (int) k.evaluate(0) + range;
+		for(double n = min + range / 2;;) {
+			double pEval = p.evaluate((int) n);
+			int kEval = (int) k.evaluate((int) n);
+			double PEval = P.evaluate((int) n);
+			
 			int possibs = Math.abs(min - max);
-			double prob = pdf((int) n, p, k);
+			double prob = pdf((int) n, pEval, kEval);
 			if(possibs <= 5)
 				println("n=" + (int) n + ", pdf(n, p, k)=" + prob);
 			
 			boolean inc; // increase or decrease n
-			if(prob <= P) {
+			if(prob <= PEval) {
 				if(possibs <= 2)
 					return (int) n;
-				inc = n * p < k;
+				inc = n * pEval < kEval;
 			} else
-				inc = n * p > k;
+				inc = n * pEval > kEval;
 			
 			if(inc) {
 				min = (int) Math.floor(n);
@@ -69,41 +81,59 @@ public class Binom {
 				n -= (n - min) / 2;
 			}
 		}
-		return -1;
 	}
 
-	/**
-	 * attempts to find k for P(X = k) <= P
-	 * @param n number of trials
-	 * @param p probability of a single success
-	 * @param P max probability of event
+	/** attempts to find k for P(X = k) <= P<br/>
+	 *  takes equations as strings
+	 * @param eq_n number of trials
+	 * @param eq_P max probability of event
+	 * @param eq_P max probability of event
 	 * @return k: list of minimum required successes 
 	 */
-	public static int[] reversePDF_k(final int n, final double p, final double P) {
-		println("started reversePDF_k with n=" + n + ", p=" + p + ", P=" + P);
-		if(n == 0) return new int[] {0};
+	public static int[] reversePDF_k(final String eq_n, final String eq_p, final String eq_P) {
+		final String paramName = "k";
+		final Equation 	n = new Equation(eq_n, paramName),
+						p = new Equation(eq_p, paramName),
+						P = new Equation(eq_P, paramName);
+		
+		println("started reversePDF_k with n=" + (int) n.evaluate(0) + ", p=" + p.evaluate(0) + ", P=" + P.evaluate(0));
+		if(n.evaluate(0) == 0) return new int[] {0};
 		int left = reversePDF_k_oneside(n, p, P, true);
 		int right = reversePDF_k_oneside(n, p, P, false);
-		if(pdf(n, p, left) > pdf(n, p, right)) return new int[] {left};
-		if(pdf(n, p, right) > pdf(n, p, left)) return new int[] {right};
+		final int 	nLeft = (int) n.evaluate(left),
+					nRight = (int) n.evaluate(right);
+		final double 	pLeft = p.evaluate(left),
+						pRight = p.evaluate(right);
+		if(pdf(nLeft, pLeft, left) > pdf(nRight, pRight, right)) return new int[] {left};
+		if(pdf(nRight, pRight, right) > pdf(nLeft, pLeft, left)) return new int[] {right};
 		return new int[] {left, right};
 	}
-	private static int reversePDF_k_oneside(final int n, final double p, final double P, boolean leftside) {
-		int expect = expect(n, p, Binom::pdf);
+	private static int reversePDF_k_oneside(final Equation n, final Equation p, final Equation P, boolean leftside) {
+		int expect = expect((int) n.evaluate(0), p.evaluate(0), Binom::pdf);
 		
 		int min = leftside ? 0 : expect;
-		int max = leftside ? expect : n;
+		int max = leftside ? expect : (int) n.evaluate(0);
 		int lastK = -1, nearestK = -1;
 		for(double k = min + (max - min)/2;;) {
+			int nEval = (int) n.evaluate((int) k);
+			double pEval = p.evaluate((int) k);
+			double PEval = P.evaluate((int) k);
+			
 			if((int) k == lastK) return nearestK;
 			lastK = (int) k;
-			double prob = pdf(n, p, (int) k);
+			double prob = pdf(nEval, pEval, (int) k);
 			int possibs = max - min;
 			if(possibs <= 5)
 				println("(" + (leftside ? "left" : "right") + ") k=" + (int) k + ", pdf(n, p, k)=" + prob);
-			if(prob <= P) {
+			
+			// increase on left side but decrease on right side if prob <= PEval
+			boolean inc = leftside;
+			if(prob <= PEval) {
 				if(possibs <= 2)
 					return (int) k;
+			} else
+				inc = !inc;
+			if(inc) {
 				nearestK = (int) k;
 				min = (int) Math.floor(k);
 				k += (max - k) / 2;
@@ -113,17 +143,21 @@ public class Binom {
 			}
 		}
 	}
-	/**
-	 * attempts to find p for P(X = k) <= P
+	/** attempts to find p for P(X = k) <= P<br/>
+	 *  takes equations as strings
 	 * 
-	 * @param n number of trials
-	 * @param k amount of successes expected
-	 * @param P max probability of event
+	 * @param eq_n number of trials
+	 * @param eq_k amount of successes expected
+	 * @param eq_P max probability of event
 	 * @param accuracy number of digits 
 	 * @return p: approximate probability required per event
-	 * 
 	 */
-	public static double reversePDF_p(final int n, final int k, final double P, final int accuracy) {
+	public static double reversePDF_p(final String eq_n, final String eq_k, final String eq_P, final int accuracy) {
+		final String paramName = "p";
+		final Equation 	n = new Equation(eq_n, paramName),
+						k = new Equation(eq_k, paramName),
+						P = new Equation(eq_P, paramName);
+		
 		double 	min = 0, max = 1,
 				lastP = -1, nearestP = -1;
 		
@@ -131,10 +165,15 @@ public class Binom {
 			double 	rounded = Math.round(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
 					floored = (int)(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
 					ceiled = Math.ceil(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy);
+			
+			int nEval = (int) n.evaluate(p);
+			int kEval = (int) k.evaluate(p);
+			double PEval = P.evaluate(p);
+			
 			if(p == lastP) return nearestP;
 			lastP = rounded;
-			double prob = pdf(n, p, k);
-			if(prob >= P) {
+			double prob = pdf(nEval, p, kEval);
+			if(prob >= PEval) {
 				if(rounded == nearestP) return rounded;
 				nearestP = rounded;
 				min = floored;
@@ -146,24 +185,36 @@ public class Binom {
 		}
 	}
 	
-	/** attempts to find n for P(X <= k) <= P
-	 * @param p probability of a single success
-	 * @param k amount of successes expected
-	 * @param P max probability of event
+	/** attempts to find n for P(X <= k) <= P<br/>
+	 *  takes equations as strings
+	 * @param eq_P max probability of event
+	 * @param eq_k amount of successes expected
+	 * @param eq_P max probability of event
 	 * @return n: number of trials required
 	 */
-	public static int reverseCDF_n(final double p, final int k, final double P) {
-		println("started reverseCDF_n with p=" + p + ", k=" + k + ", P=" + P);
+	public static int reverseCDF_n(final String eq_p, final String eq_k, final String eq_P) {
+		final String paramName = "n";
+		final Equation 	p = new Equation(eq_p, paramName),
+						k = new Equation(eq_k, paramName),
+						P = new Equation(eq_P, paramName);
+		
+		int k0 = (int) k.evaluate(0);
+		double p0 = p.evaluate(0), P0 = P.evaluate(0);
+		println("started reverseCDF_n with p=" + p0 + ", k=" + k0 + ", P=" + P0);
 		final int range = 10000;
-		int min = k, max = k + range, lastN = -1, nearestN = -1;
-		for(double n = min + range / 2; n < k + range;) {
+		int min = k0, max = k0 + range, lastN = -1, nearestN = -1;
+		for(double n = min + range / 2;;) {
+			double pEval = p.evaluate((int) n);
+			int kEval = (int) k.evaluate((int) n);
+			double PEval = P.evaluate((int) n);
+			
 			if((int) n == lastN) return nearestN;
 			int possibs = Math.abs(min - max);
-			double prob = cdf((int) n, p, k);
+			double prob = cdf((int) n, pEval, kEval);
 			if(possibs <= 5)
 				println("n=" + (int) n + ", cdf(n, p, k)=" + prob);
 			lastN = (int) n;
-			if(prob <= P) {
+			if(prob <= PEval) {
 				if(possibs <= 2)
 					return (int) n;
 				nearestN = (int) n;
@@ -174,30 +225,40 @@ public class Binom {
 				n += (max - n) / 2;
 			}
 		}
-		return -1;
 	}
-	/**
-	 * attempts to find k for P(X <= k) <= P
-	 * @param n number of trials
-	 * @param p probability of a single success
-	 * @param P max probability of event
+	/** attempts to find k for P(X <= k) <= P<br/>
+	 *  takes equations as strings
+	 * @param eq_n number of trials
+	 * @param eq_P max probability of event
+	 * @param eq_P max probability of event
 	 * @return k: minimum amount of successes
 	 */
-	public static int reverseCDF_k(final int n, final double p, final double P) {
-		println("started reverseCDF_k with n=" + n + ", p=" + p + ", P=" + P);
-		if(n == 0) return 0;
+	public static int reverseCDF_k(final String eq_n, final String eq_p, final String eq_P) {
+		final String paramName = "k";
+		final Equation 	n = new Equation(eq_n, paramName),
+						p = new Equation(eq_p, paramName),
+						P = new Equation(eq_P, paramName);
 		
-		int min = 0, max = n,
+		int n0 = (int) n.evaluate(0);
+		double p0 = p.evaluate(0), P0 = P.evaluate(0);
+		println("started reverseCDF_k with n=" + n0 + ", p=" + p0 + ", P=" + P0);
+		if(n0 == 0) return 0;
+		
+		int min = 0, max = n0,
 			lastK = -1, nearestK = -1;
 		for(double k = min + (max - min)/2;;) {
+			int nEval = (int) n.evaluate((int) k);
+			double pEval = p.evaluate((int) k);
+			double PEval = P.evaluate((int) k);
+			
 			if((int) k == lastK) return nearestK;
 			lastK = (int) k;
 			
-			double prob = cdf(n, p, (int) k);
+			double prob = cdf(nEval, pEval, (int) k);
 			int possibs = max - min;
 			if(possibs <= 5)
 				println("k=" + (int) k + ", cdf(n, p, k)=" + prob);
-			if(prob <= P) {
+			if(prob <= PEval) {
                 if(possibs <= 2)
 					return (int) k;
 				nearestK = (int) k;
@@ -210,28 +271,36 @@ public class Binom {
 		}
 	}
 	
-	/**
-	 * attempts to find p for P(X <= k) <= P
+	/** attempts to find p for P(X <= k) <= P<br/>
+	 *  takes equations as strings
 	 * 
-	 * @param n number of trials
-	 * @param k amount of successes expected
-	 * @param P max probability of event
+	 * @param eq_n number of trials
+	 * @param eq_k amount of successes expected
+	 * @param eq_P max probability of event
 	 * @param accuracy number of digits 
 	 * @return p: approximate probability required per event
-	 * 
 	 */
-	public static double reverseCDF_p(final int n, final int k, final double P, final int accuracy) {
+	public static double reverseCDF_p(final String eq_n, final String eq_k, final String eq_P, final int accuracy) {
 		double 	min = 0, max = 1,
 				lastP = -1, nearestP = -1;
 		
+		final String paramName = "p";
+		final Equation 	n = new Equation(eq_n, paramName),
+						k = new Equation(eq_k, paramName),
+						P = new Equation(eq_P, paramName);
+		
 		for(double p = 0.5;;) {
+			int nEval = (int) n.evaluate(p);
+			int kEval = (int) k.evaluate(p);
+			double PEval = P.evaluate(p);
+			
 			double 	rounded = Math.round(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
 					floored = (int)(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
 					ceiled = Math.ceil(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy);
 			if(p == lastP) return nearestP;
 			lastP = rounded;
-			double prob = cdf(n, p, k);
-			if(prob >= P) {
+			double prob = cdf(nEval, p, kEval);
+			if(prob >= PEval) {
 				if(rounded == nearestP) return rounded;
 				nearestP = rounded;
 				min = floored;
@@ -242,7 +311,6 @@ public class Binom {
 			}
 		}
 	}
-	
 	
 	private static void println(String info) {
 		if(quiet) return;

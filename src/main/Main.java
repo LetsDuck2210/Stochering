@@ -1,11 +1,12 @@
 package main;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
 import binom.Binom;
-
-import java.lang.reflect.Method;
 
 public class Main {
 
@@ -37,6 +38,7 @@ public class Main {
 			"reverseCDF_k(n, p, P)",
 			"reverseCDF_p(n, k, P, accuracy)"
 		};
+		
 		for(String method : methodDefs) {
 			System.out.println("\t" + method);
 		}
@@ -67,7 +69,9 @@ public class Main {
                     matching = method;
                 }
             }
-            if(matching == null) {
+            final String matchingName = matching.getName();
+            if(matching == null 
+            		|| !List.of(methodDefs).stream().anyMatch(m -> m.startsWith(matchingName))) { // don't want equals(..) notify(..) etc.
             	System.out.println("no function found for name " + func);
             	continue;
             }
@@ -88,7 +92,15 @@ public class Main {
             }
 
             try {
-                System.out.println(matching.invoke(null, paramObjects));
+                Object out = matching.invoke(null, paramObjects);
+                if(out.getClass().isArray()) {
+                	final int len = Array.getLength(out);
+                	System.out.print("{");
+                	for(int i = 0; i < len; i++)
+                		System.out.print(Array.get(out, i) + (i < len - 1 ? ", " : ""));
+                	System.out.println("}");
+                } else
+                	System.out.println(out);
             } catch(Exception e) {
                 System.out.println("couldn't invoke method: " + e.getMessage());
             }
@@ -99,10 +111,12 @@ public class Main {
 
     public static Object parseParam(String givenParam, Class<?> clazz) {
         try {
+        	if(String.class.isAssignableFrom(clazz))
+        		return givenParam;
             if(double.class.isAssignableFrom(clazz) || Double.class.isAssignableFrom(clazz))
-                return Double.parseDouble(givenParam);
+                return new Equation(givenParam, "").evaluate(0);
             if(int.class.isAssignableFrom(clazz) || Integer.class.isAssignableFrom(clazz))
-                return Integer.parseInt(givenParam);
+                return (int) new Equation(givenParam, "").evaluate(0);
         } catch(Exception e) {
             return null;
         }
@@ -112,25 +126,25 @@ public class Main {
 	public static void randPDF_n() {
 		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
 		final int k = new Random().nextInt(10);
-		int result = Binom.reversePDF_n(p, k, P);
+		int result = Binom.reversePDF_n("" + p, "" + k, "" + P);
 		System.out.println((Binom.pdf(result, p, k) > P ? "\033[0;31m" : "") + "n = " + result + "\033[0m");
 	}
 	public static void randPDF_k() {
 		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
 		final int n = new Random().nextInt(20);
-		int[] result = Binom.reversePDF_k(n, p, P);
+		int[] result = Binom.reversePDF_k("" + n, "" + p, "" + P);
 		System.out.println("k = {" + result[0] + (result.length == 1 ? "" : ", " + result[1]) + "}");
 	}
 	public static void randCDF_n() {
 		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
 		final int k = new Random().nextInt(10);
-		int result = Binom.reverseCDF_n(p, k, P);
+		int result = Binom.reverseCDF_n("" + p, "" + k, "" + P);
 		System.out.println((Binom.cdf(result, p, k) > P ? "\033[0;31m" : "") + "n = " + result + "\033[0m");
 	}
 	public static void randCDF_k() {
 		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
 		final int n = new Random().nextInt(20);
-		int result = Binom.reverseCDF_k(n, p, P);
+		int result = Binom.reverseCDF_k("" + n, "" + p, "" + P);
 		System.out.println((Binom.cdf(n, p, result) > P ? "\033[0;31m" : "") + "k = " + result + "\033[0m");
 	}
 }

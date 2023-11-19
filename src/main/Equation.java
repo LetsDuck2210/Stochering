@@ -71,6 +71,9 @@ public class Equation {
 		this.left = new Equation(left, paramName);
 		this.right = new Equation(right, paramName);
 	}
+	public Equation(Number n) {
+		term = "" + n;
+	}
 	
 	public double evaluate(double param) {
 		if(left != null && right != null)
