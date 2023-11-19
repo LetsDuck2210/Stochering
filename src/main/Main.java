@@ -3,10 +3,11 @@ package main;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Random;
 import java.util.Scanner;
 
 import binom.Binom;
+import binom.CDF;
+import binom.PDF;
 
 public class Main {
 
@@ -58,7 +59,7 @@ public class Main {
             for(int i = 0; i < params.length; i++)
                 params[i] = params[i].trim();
             
-            Method[] methods = Binom.class.getMethods();
+            Method[] methods = getAllMethods();
             Method matching = null;
             for(Method method : methods) {
                 if(matchesFuzzy(method.getName(), func) && method.getParameterCount() == params.length) {
@@ -108,6 +109,23 @@ public class Main {
         }
         sc.close();
 	}
+	
+	private static Method[] getAllMethods() {
+		Method[][] all = {
+			Binom.class.getMethods(),
+			CDF.class.getMethods(),
+			PDF.class.getMethods()
+		};
+		
+		int len = 0;
+		for(int i = 0; i < all.length; i++) len += all[i].length;
+		
+		Method[] onedim = new Method[len];
+		for(int i = 0, f = 0; i < all.length; i++)
+			for(int j = 0; j < all[i].length; j++, f++)
+				onedim[f] = all[i][j];
+		return onedim;
+	}
 
     public static Object parseParam(String givenParam, Class<?> clazz) {
         try {
@@ -123,28 +141,4 @@ public class Main {
         return null;
     }
 	
-	public static void randPDF_n() {
-		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
-		final int k = new Random().nextInt(10);
-		int result = Binom.reversePDF_n("" + p, "" + k, "" + P);
-		System.out.println((Binom.pdf(result, p, k) > P ? "\033[0;31m" : "") + "n = " + result + "\033[0m");
-	}
-	public static void randPDF_k() {
-		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
-		final int n = new Random().nextInt(20);
-		int[] result = Binom.reversePDF_k("" + n, "" + p, "" + P);
-		System.out.println("k = {" + result[0] + (result.length == 1 ? "" : ", " + result[1]) + "}");
-	}
-	public static void randCDF_n() {
-		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
-		final int k = new Random().nextInt(10);
-		int result = Binom.reverseCDF_n("" + p, "" + k, "" + P);
-		System.out.println((Binom.cdf(result, p, k) > P ? "\033[0;31m" : "") + "n = " + result + "\033[0m");
-	}
-	public static void randCDF_k() {
-		final double p = (int)(Math.random() * 100) / 100.0, P = (int)(Math.random() * 100) / 100.0;
-		final int n = new Random().nextInt(20);
-		int result = Binom.reverseCDF_k("" + n, "" + p, "" + P);
-		System.out.println((Binom.cdf(n, p, result) > P ? "\033[0;31m" : "") + "k = " + result + "\033[0m");
-	}
 }
