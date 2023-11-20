@@ -1,9 +1,11 @@
 package binom;
 
+import static binom.Binom.INEG_ONE;
+import static binom.Binom.ITWO;
 import static binom.Binom.cdf;
 import static binom.Binom.println;
-import static java.math.BigDecimal.ZERO;
 import static java.math.BigDecimal.ONE;
+import static java.math.BigDecimal.ZERO;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -43,8 +45,8 @@ public class CDF {
 						P = new Equation(eq_P, paramName);
 		
 		println("started reverseCDF_n with p=" + p.getTerm() + ", k=" + k.getTerm() + ", P=" + P.getTerm());
-		BigInteger lastN = new BigInteger("-1"), nearestN = new BigInteger("-1");
-		for(BigDecimal n = new BigDecimal((min.add(max)).divide(new BigInteger("2")));;) {
+		BigInteger lastN = INEG_ONE, nearestN = INEG_ONE;
+		for(BigDecimal n = new BigDecimal(min.add(max).divide(ITWO));;) {
 			BigDecimal pEval = p.evaluateDouble(n);
 			BigInteger kEval = k.evaluateInt(n).max(BigInteger.ZERO);
 			BigDecimal PEval = P.evaluateDouble(n);
@@ -56,7 +58,7 @@ public class CDF {
 				println("cdf(n=" + Binom.floor(n).toBigIntegerExact() + ", p=" + pEval + ", k=" + kEval + ")=" + prob);
 			lastN = Binom.floor(n).toBigIntegerExact();
 			if(prob.compareTo(PEval) <= 0) {
-				if(possibs.compareTo(new BigInteger("2")) <= 0)
+				if(possibs.compareTo(ITWO) <= 0)
 					return Binom.floor(n).toBigIntegerExact();
 				nearestN = Binom.floor(n).toBigIntegerExact();
 				max = Binom.ceil(n).toBigIntegerExact(); 
@@ -98,8 +100,8 @@ public class CDF {
 		println("started reverseCDF_k with n=" + n.getTerm() + ", p=" + p.getTerm() + ", P=" + P.getTerm());
 		if(n0.intValueExact() == 0) return BigInteger.ZERO;
 		
-		BigInteger lastK = new BigInteger("-1"), nearestK = new BigInteger("-1");
-		for(BigDecimal k = new BigDecimal(min.add((max.subtract(min)).divide(new BigInteger("2"))));;) {
+		BigInteger lastK = INEG_ONE, nearestK = INEG_ONE;
+		for(BigDecimal k = new BigDecimal(min.add((max.subtract(min)).divide(ITWO)));;) {
 			BigInteger nEval = n.evaluateInt(k);
 			BigDecimal pEval = p.evaluateDouble(k);
 			BigDecimal PEval = P.evaluateDouble(k);
@@ -112,7 +114,7 @@ public class CDF {
 			if(possibs.compareTo(new BigInteger("5")) <= 0)
 				println("cdf(n=" + nEval + ", p=" + pEval + ", k=" + Binom.floor(k).toBigIntegerExact() + ")=" + prob);
 			if(prob.compareTo(PEval) <= 0) {
-                if(possibs.compareTo(new BigInteger("2")) <= 0)
+                if(possibs.compareTo(ITWO) <= 0)
 					return Binom.floor(k).toBigIntegerExact();
 				nearestK = Binom.floor(k).toBigIntegerExact();
 				min = Binom.floor(k).toBigIntegerExact();
@@ -147,9 +149,9 @@ public class CDF {
 			BigInteger kEval = k.evaluateInt(p);
 			BigDecimal PEval = P.evaluateDouble(p);
 			
-			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact()))))),
-						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact()))))),
-						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact())))));
+			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
+						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
+						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())));
 			if(p.compareTo(lastP) == 0) return nearestP;
 			lastP = rounded;
 			BigDecimal prob = cdf(nEval, p, kEval);

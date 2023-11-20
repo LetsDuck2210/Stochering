@@ -10,6 +10,11 @@ import java.math.RoundingMode;
 public class Binom {
 	public static boolean quiet = false;
 	
+	public static final BigDecimal DTWO = new BigDecimal("2"),
+									DNEG_ONE = new BigDecimal("-1");
+	public static final BigInteger ITWO = new BigInteger("2"),
+									INEG_ONE = new BigInteger("-1");
+	
 	interface Event {
 		public BigDecimal prob(BigInteger n, BigDecimal p, BigInteger k);
 	}

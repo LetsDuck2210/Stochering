@@ -1,7 +1,8 @@
 package main;
 
-import java.lang.reflect.Array;
+import static java.math.BigDecimal.ZERO;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -11,8 +12,6 @@ import java.util.Scanner;
 import binom.Binom;
 import binom.CDF;
 import binom.PDF;
-
-import static java.math.BigDecimal.ZERO;
 
 public class Main {
 
@@ -59,6 +58,7 @@ public class Main {
             
             Equation eq = new Equation(op, "");
             Object out = eq.evaluate(ZERO);
+            if(out == null) continue;
             if(out.getClass().isArray()) {
             	int len = Array.getLength(out);
             	for(int i = 0; i < len; i++) {
@@ -110,7 +110,8 @@ public class Main {
 		Method[][] all = {
 			Binom.class.getMethods(),
 			CDF.class.getMethods(),
-			PDF.class.getMethods()
+			PDF.class.getMethods(),
+			Math.class.getMethods()
 		};
 		
 		int len = 0;

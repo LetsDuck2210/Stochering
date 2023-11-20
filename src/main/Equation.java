@@ -93,7 +93,6 @@ public class Equation {
 			String[] params = term.substring(term.indexOf('(') + 1, term.length() - 1).split(",\\s*");
 			try {
 				Object out = Main.invokeFunction(func, params);
-				
 				return out;
 			} catch (InvocationTargetException | IllegalAccessException e) {
 				System.out.println("couldn't invoke function \"" + func + "\": " + e.getMessage());

@@ -3,6 +3,9 @@ package binom;
 import static binom.Binom.expect;
 import static binom.Binom.pdf;
 import static binom.Binom.println;
+import static binom.Binom.DTWO;
+import static binom.Binom.ITWO;
+import static binom.Binom.INEG_ONE;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -45,19 +48,19 @@ public class PDF {
 		
 		println("started reversePDF_n with p=" + p.getTerm() + ", k=" + k.getTerm() + ", P=" + P.getTerm());
 		
-		for(BigDecimal n = new BigDecimal((min.add(max)).divide(new BigInteger("2")));;) {
+		for(BigDecimal n = new BigDecimal((min.add(max)).divide(ITWO));;) {
 			BigDecimal pEval = p.evaluateDouble(new BigDecimal(n.intValueExact()));
 			BigInteger kEval = k.evaluateInt(new BigDecimal(n.intValueExact()));
 			BigDecimal PEval = P.evaluateDouble(new BigDecimal(n.intValueExact()));
 			
-			int possibs = Math.abs(min.subtract(max).intValueExact());
+			BigInteger possibs = min.subtract(max).abs();
 			BigDecimal prob = pdf(n.toBigInteger(), pEval, kEval);
-			if(possibs <= 5)
+			if(possibs.compareTo(new BigInteger("5")) <= 0)
 				println("n=" + n.toBigInteger() + ", pdf(n, p, k)=" + prob);
 			
 			boolean inc; // increase or decrease n
 			if(prob.compareTo(PEval) <= 0) {
-				if(possibs <= 2)
+				if(possibs.compareTo(ITWO) <= 0)
 					return n.toBigInteger();
 				inc = n.multiply(pEval).compareTo(new BigDecimal(kEval)) < 0;
 			} else
@@ -65,10 +68,10 @@ public class PDF {
 			
 			if(inc) {
 				min = n.toBigInteger();
-				n = n.add(new BigDecimal(max.subtract(n.toBigInteger()).divide(new BigInteger("2"))));
+				n = n.add(new BigDecimal(max.subtract(n.toBigInteger()).divide(ITWO)));
 			} else {
 				max = n.round(MathContext.UNLIMITED).toBigInteger();
-				n = n.subtract((n.subtract(new BigDecimal(min))).divide(new BigDecimal(2)));
+				n = n.subtract((n.subtract(new BigDecimal(min))).divide(DTWO));
 			}
 		}
 	}
@@ -116,8 +119,8 @@ public class PDF {
 		BigInteger expect = expect(n.evaluateInt(ZERO), p.evaluateDouble(ZERO), Binom::pdf);
 		BigInteger 	min = leftside ? min0 : expect,
 					max = leftside ? expect : max0;
-		BigInteger lastK = new BigInteger("-1"), nearestK = new BigInteger("-1");
-		for(BigDecimal k = new BigDecimal(min.add(max.subtract(min)).divide(new BigInteger("2")));;) {
+		BigInteger lastK = INEG_ONE, nearestK = INEG_ONE;
+		for(BigDecimal k = new BigDecimal(min.add(max.subtract(min)).divide(ITWO));;) {
 			BigInteger nEval = n.evaluateInt(k);
 			BigDecimal pEval = p.evaluateDouble(k);
 			BigDecimal PEval = P.evaluateDouble(k);
@@ -132,17 +135,17 @@ public class PDF {
 			// increase on left side but decrease on right side if prob <= PEval
 			boolean inc = leftside;
 			if(prob.compareTo(PEval) <= 0) {
-				if(possibs.compareTo(new BigInteger("2")) <= 0)
+				if(possibs.compareTo(ITWO) <= 0)
 					return Binom.floor(k).toBigInteger();
 			} else
 				inc = !inc;
 			if(inc) {
 				nearestK = Binom.floor(k).toBigInteger();
 				min = Binom.floor(k).toBigInteger();
-				k = k.add((new BigDecimal(max).subtract(k)).divide(new BigDecimal(2)));
+				k = k.add((new BigDecimal(max).subtract(k)).divide(DTWO));
 			} else {
 				max = Binom.ceil(k).toBigInteger();
-				k = k.subtract((k.subtract(new BigDecimal(min))).divide(new BigDecimal(2)));
+				k = k.subtract((k.subtract(new BigDecimal(min))).divide(DTWO));
 			}
 		}
 	}
@@ -166,9 +169,9 @@ public class PDF {
 					lastP = new BigDecimal(-1), nearestP = new BigDecimal(-1);
 		
 		for(BigDecimal p = new BigDecimal("0.5");;) {
-			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact()))))),
-						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact()))))),
-						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact())))));
+			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
+						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
+						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())));
 			
 			BigInteger nEval = n.evaluateInt(p);
 			BigInteger kEval = k.evaluateInt(p);
@@ -181,10 +184,10 @@ public class PDF {
 				if(rounded == nearestP) return rounded;
 				nearestP = rounded;
 				min = floored;
-				p = p.add((max.subtract(p)).divide(new BigDecimal(2)));
+				p = p.add(max.subtract(p).divide(DTWO));
 			} else {
 				max = ceiled;
-				p = p.subtract((p.subtract(min)).divide(new BigDecimal(2)));
+				p = p.subtract(p.subtract(min).divide(DTWO));
 			}
 		}
 	}
