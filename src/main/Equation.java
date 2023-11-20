@@ -1,14 +1,19 @@
 package main;
 
+import static java.math.BigDecimal.ZERO;
+
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		MULT('*', (a, b) -> a*b), DIV('/', (a,b) -> a/b), SUB('-', (a, b) -> a-b), ADD('+', (a, b) -> a+b), NOP('\0', (a,b) -> 0.0);
+		MULT('*', (a, b) -> a.multiply(b)), DIV('/', (a,b) -> a.divide(b)), SUB('-', (a, b) -> a.subtract(b)), ADD('+', (a, b) -> a.add(b)), NOP('\0', (a,b) -> ZERO);
 		
 		private final char str;
-		private final BiFunction<Double, Double, Double> applyF;
-		private Operation(char c, BiFunction<Double, Double, Double> applyF) {
+		private final BiFunction<BigDecimal, BigDecimal, BigDecimal> applyF;
+		private Operation(char c, BiFunction<BigDecimal, BigDecimal, BigDecimal> applyF) {
 			this.str = c;
 			this.applyF = applyF;
 			
@@ -16,7 +21,7 @@ public class Equation {
 		public char character() {
 			return str;
 		}
-		public double apply(double a, double b) {
+		public BigDecimal apply(BigDecimal a, BigDecimal b) {
 			return applyF.apply(a, b);
 		}
 	}
@@ -78,11 +83,33 @@ public class Equation {
 		return term;
 	}
 	
-	public double evaluate(double param) {
+	public Object evaluate(BigDecimal param) {
 		if(left != null && right != null)
-			return operation.apply(left.evaluate(param), right.evaluate(param));
+			return operation.apply(left.evaluateDouble(param), right.evaluateDouble(param));
 		if(term.equals(paramName))
 			return param;
+		if(term.matches("[a-zA-Z]+\\s*\\(.*\\)")) { // function
+			String func = term.substring(0, term.indexOf('('));
+			String[] params = term.substring(term.indexOf('(') + 1, term.length() - 1).split(",\\s*");
+			try {
+				Object out = Main.invokeFunction(func, params);
+				
+				return out;
+			} catch (InvocationTargetException | IllegalAccessException e) {
+				System.out.println("couldn't invoke function \"" + func + "\": " + e.getMessage());
+				if(e.getMessage() == null)
+					e.printStackTrace();
+				return null;
+			}
+		}
+		if(term.matches("(\".*\")|('.*')")) // string
+			return term.substring(1, term.length() - 1);
 		return Double.parseDouble(term.trim());
+	}
+	public BigDecimal evaluateDouble(BigDecimal param) {
+		return new BigDecimal("" + evaluate(param));
+	}
+	public BigInteger evaluateInt(BigDecimal param) {
+		return new BigInteger("" + ((Number) evaluate(param)).intValue());
 	}
 }

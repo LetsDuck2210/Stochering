@@ -1,7 +1,14 @@
 package binom;
 
+import static binom.Binom.cdf;
+import static binom.Binom.println;
+import static java.math.BigDecimal.ZERO;
+import static java.math.BigDecimal.ONE;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import main.Equation;
-import static binom.Binom.*;
 
 public class CDF {
 	
@@ -14,10 +21,10 @@ public class CDF {
 	 * @param max biggest possible n
 	 * @return n: number of trials required
 	 */
-	public static int reverseCDF_n(final String eq_p, final String eq_k, final String eq_P) {
-		final int range = 10000;
-		int k0 = Math.max((int) new Equation(eq_k, "n").evaluate(0), 0);
-		int min = k0, max = k0 + range;
+	public static BigInteger reverseCDF_n(final String eq_p, final String eq_k, final String eq_P) {
+		final BigInteger range = new BigInteger("10000");
+		BigInteger k0 = new Equation(eq_k, "n").evaluateInt(ZERO).max(BigInteger.ZERO);
+		BigInteger min = k0, max = k0.add(range);
 		return reverseCDF_n(eq_p, eq_k, eq_P, min, max);
 	}
 	/** attempts to find n for P(X <= k) <= P<br/>
@@ -29,34 +36,34 @@ public class CDF {
 	 * @param max biggest possible n
 	 * @return n: number of trials required
 	 */
-	public static int reverseCDF_n(final String eq_p, final String eq_k, final String eq_P, int min, int max) {
+	public static BigInteger reverseCDF_n(final String eq_p, final String eq_k, final String eq_P, BigInteger min, BigInteger max) {
 		final String paramName = "n";
 		final Equation 	p = new Equation(eq_p, paramName),
 						k = new Equation(eq_k, paramName),
 						P = new Equation(eq_P, paramName);
 		
 		println("started reverseCDF_n with p=" + p.getTerm() + ", k=" + k.getTerm() + ", P=" + P.getTerm());
-		int lastN = -1, nearestN = -1;
-		for(double n = (min + max) / 2;;) {
-			double pEval = p.evaluate((int) n);
-			int kEval = Math.max((int) k.evaluate((int) n), 0);
-			double PEval = P.evaluate((int) n);
+		BigInteger lastN = new BigInteger("-1"), nearestN = new BigInteger("-1");
+		for(BigDecimal n = new BigDecimal((min.add(max)).divide(new BigInteger("2")));;) {
+			BigDecimal pEval = p.evaluateDouble(n);
+			BigInteger kEval = k.evaluateInt(n).max(BigInteger.ZERO);
+			BigDecimal PEval = P.evaluateDouble(n);
 			
-			if((int) n == lastN) return nearestN;
-			int possibs = Math.abs(min - max);
-			double prob = cdf((int) n, pEval, kEval);
-			if(possibs <= 5)
-				println("n=" + (int) n + ", k=" + kEval + ", cdf(n, p, k)=" + prob);
-			lastN = (int) n;
-			if(prob <= PEval) {
-				if(possibs <= 2)
-					return (int) n;
-				nearestN = (int) n;
-				max = (int) Math.ceil(n); 
-				n -= (n - min) / 2;
+			if(n.compareTo(new BigDecimal(lastN)) == 0) return nearestN;
+			BigInteger possibs = min.subtract(max).abs();
+			BigDecimal prob = cdf(Binom.floor(n).toBigIntegerExact(), pEval, kEval);
+			if(possibs.compareTo(new BigInteger("5")) <= 0)
+				println("cdf(n=" + Binom.floor(n).toBigIntegerExact() + ", p=" + pEval + ", k=" + kEval + ")=" + prob);
+			lastN = Binom.floor(n).toBigIntegerExact();
+			if(prob.compareTo(PEval) <= 0) {
+				if(possibs.compareTo(new BigInteger("2")) <= 0)
+					return Binom.floor(n).toBigIntegerExact();
+				nearestN = Binom.floor(n).toBigIntegerExact();
+				max = Binom.ceil(n).toBigIntegerExact(); 
+				n = n.subtract((n.subtract(new BigDecimal(min))).divide(new BigDecimal(2)));
 			} else {
-				min = (int) Math.floor(n);
-				n += (max - n) / 2;
+				min = Binom.floor(n).toBigIntegerExact();
+				n = n.add((new BigDecimal(max).subtract(n)).divide(new BigDecimal(2)));
 			}
 		}
 	}
@@ -68,8 +75,8 @@ public class CDF {
 	 * @param eq_P max probability of event
 	 * @return k: minimum amount of successes
 	 */
-	public static int reverseCDF_k(final String eq_n, final String eq_p, final String eq_P) {
-		int min = 0, max = (int) new Equation(eq_n, "k").evaluate(0);
+	public static BigInteger reverseCDF_k(final String eq_n, final String eq_p, final String eq_P) {
+		BigInteger min = BigInteger.ZERO, max = new Equation(eq_n, "k").evaluateInt(ZERO);
 		return reverseCDF_k(eq_n, eq_p, eq_P, min, max);
 	}
 	/** attempts to find k for P(X <= k) <= P<br/>
@@ -81,38 +88,38 @@ public class CDF {
 	 * @param max biggest possible k
 	 * @return k: minimum amount of successes
 	 */
-	public static int reverseCDF_k(final String eq_n, final String eq_p, final String eq_P, int min, int max) {
+	public static BigInteger reverseCDF_k(final String eq_n, final String eq_p, final String eq_P, BigInteger min, BigInteger max) {
 		final String paramName = "k";
 		final Equation 	n = new Equation(eq_n, paramName),
 						p = new Equation(eq_p, paramName),
 						P = new Equation(eq_P, paramName);
 		
-		int n0 = (int) n.evaluate(0);
+		BigInteger n0 = n.evaluateInt(ZERO);
 		println("started reverseCDF_k with n=" + n.getTerm() + ", p=" + p.getTerm() + ", P=" + P.getTerm());
-		if(n0 == 0) return 0;
+		if(n0.intValueExact() == 0) return BigInteger.ZERO;
 		
-		int lastK = -1, nearestK = -1;
-		for(double k = min + (max - min)/2;;) {
-			int nEval = (int) n.evaluate((int) k);
-			double pEval = p.evaluate((int) k);
-			double PEval = P.evaluate((int) k);
+		BigInteger lastK = new BigInteger("-1"), nearestK = new BigInteger("-1");
+		for(BigDecimal k = new BigDecimal(min.add((max.subtract(min)).divide(new BigInteger("2"))));;) {
+			BigInteger nEval = n.evaluateInt(k);
+			BigDecimal pEval = p.evaluateDouble(k);
+			BigDecimal PEval = P.evaluateDouble(k);
 			
-			if((int) k == lastK) return nearestK;
-			lastK = (int) k;
+			if(Binom.floor(k).toBigIntegerExact().compareTo(lastK) == 0) return nearestK;
+			lastK = Binom.floor(k).toBigIntegerExact();
 			
-			double prob = cdf(nEval, pEval, (int) k);
-			int possibs = max - min;
-			if(possibs <= 5)
-				println("k=" + (int) k + ", cdf(n, p, k)=" + prob);
-			if(prob <= PEval) {
-                if(possibs <= 2)
-					return (int) k;
-				nearestK = (int) k;
-				min = (int) Math.floor(k);
-				k += (max - k) / 2;
+			BigDecimal prob = cdf(nEval, pEval, Binom.floor(k).toBigIntegerExact());
+			BigInteger possibs = max.subtract(min);
+			if(possibs.compareTo(new BigInteger("5")) <= 0)
+				println("cdf(n=" + nEval + ", p=" + pEval + ", k=" + Binom.floor(k).toBigIntegerExact() + ")=" + prob);
+			if(prob.compareTo(PEval) <= 0) {
+                if(possibs.compareTo(new BigInteger("2")) <= 0)
+					return Binom.floor(k).toBigIntegerExact();
+				nearestK = Binom.floor(k).toBigIntegerExact();
+				min = Binom.floor(k).toBigIntegerExact();
+				k = k.add((new BigDecimal(max).subtract(k)).divide(new BigDecimal(2)));
 			} else {
-				max = (int) Math.ceil(k);
-				k -= (k - min) / 2;
+				max = Binom.ceil(k).toBigIntegerExact();
+				k = k.subtract(k.subtract(new BigDecimal(min)).divide(new BigDecimal(2)));
 			}
 		}
 	}
@@ -126,34 +133,34 @@ public class CDF {
 	 * @param accuracy number of digits 
 	 * @return p: approximate probability required per event
 	 */
-	public static double reverseCDF_p(final String eq_n, final String eq_k, final String eq_P, final int accuracy) {
-		double 	min = 0, max = 1,
-				lastP = -1, nearestP = -1;
+	public static BigDecimal reverseCDF_p(final String eq_n, final String eq_k, final String eq_P, final BigInteger accuracy) {
+		BigDecimal 	min = ZERO, max = ONE,
+					lastP = new BigDecimal(-1), nearestP = new BigDecimal(-1);
 		
 		final String paramName = "p";
 		final Equation 	n = new Equation(eq_n, paramName),
 						k = new Equation(eq_k, paramName),
 						P = new Equation(eq_P, paramName);
 		
-		for(double p = 0.5;;) {
-			int nEval = (int) n.evaluate(p);
-			int kEval = (int) k.evaluate(p);
-			double PEval = P.evaluate(p);
+		for(BigDecimal p = new BigDecimal("0.5");;) {
+			BigInteger nEval = n.evaluateInt(p);
+			BigInteger kEval = k.evaluateInt(p);
+			BigDecimal PEval = P.evaluateDouble(p);
 			
-			double 	rounded = Math.round(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
-					floored = (int)(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy),
-					ceiled = Math.ceil(p * Math.pow(10, accuracy)) / Math.pow(10, accuracy);
-			if(p == lastP) return nearestP;
+			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact()))))),
+						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact()))))),
+						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()).divide(BigInteger.TEN.pow(accuracy.intValueExact())))));
+			if(p.compareTo(lastP) == 0) return nearestP;
 			lastP = rounded;
-			double prob = cdf(nEval, p, kEval);
-			if(prob >= PEval) {
+			BigDecimal prob = cdf(nEval, p, kEval);
+			if(prob.compareTo(PEval) >= 0) {
 				if(rounded == nearestP) return rounded;
 				nearestP = rounded;
 				min = floored;
-				p += (max - p) / 2;
+				p = p.add(max.subtract(p).divide(new BigDecimal(2)));
 			} else {
 				max = ceiled;
-				p -= (p - min) / 2;
+				p = p.subtract(p.subtract(min).divide(new BigDecimal(2)));
 			}
 		}
 	}
