@@ -6,6 +6,7 @@ import static binom.Binom.println;
 import static binom.Binom.DTWO;
 import static binom.Binom.ITWO;
 import static binom.Binom.INEG_ONE;
+import static binom.Binom.DNEG_ONE;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -160,28 +161,28 @@ public class PDF {
 	 * @return p: approximate probability required per event
 	 */
 	public static BigDecimal reversePDF_p(final String eq_n, final String eq_k, final String eq_P, final BigInteger accuracy) {
+		BigDecimal 	min = ZERO, max = ONE,
+					lastP = DNEG_ONE, lastProb = DNEG_ONE, nearestP = DNEG_ONE;
+		
 		final String paramName = "p";
 		final Equation 	n = new Equation(eq_n, paramName),
 						k = new Equation(eq_k, paramName),
 						P = new Equation(eq_P, paramName);
 		
-		BigDecimal 	min = ZERO, max = ONE,
-					lastP = new BigDecimal(-1), nearestP = new BigDecimal(-1);
-		
 		for(BigDecimal p = new BigDecimal("0.5");;) {
-			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
-						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
-						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())));
-			
 			BigInteger nEval = n.evaluateInt(p);
 			BigInteger kEval = k.evaluateInt(p);
 			BigDecimal PEval = P.evaluateDouble(p);
 			
-			if(p.compareTo(lastP) == 0) return nearestP;
+			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact())))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())),
+						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact())))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())),
+						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact())))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()));
+			
+			if(rounded.compareTo(lastP) == 0) return nearestP;
 			lastP = rounded;
 			BigDecimal prob = pdf(nEval, p, kEval);
 			if(prob.compareTo(PEval) >= 0) {
-				if(rounded == nearestP) return rounded;
+				if(rounded.compareTo(nearestP) == 0) return rounded;
 				nearestP = rounded;
 				min = floored;
 				p = p.add(max.subtract(p).divide(DTWO));
@@ -189,6 +190,9 @@ public class PDF {
 				max = ceiled;
 				p = p.subtract(p.subtract(min).divide(DTWO));
 			}
+			if(prob.compareTo(lastProb) > 0)
+				nearestP = rounded;
+			lastProb = prob;
 		}
 	}
 	

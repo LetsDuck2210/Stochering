@@ -1,7 +1,9 @@
 package binom;
 
 import static binom.Binom.INEG_ONE;
+import static binom.Binom.DNEG_ONE;
 import static binom.Binom.ITWO;
+import static binom.Binom.DTWO;
 import static binom.Binom.cdf;
 import static binom.Binom.println;
 import static java.math.BigDecimal.ONE;
@@ -62,10 +64,10 @@ public class CDF {
 					return Binom.floor(n).toBigIntegerExact();
 				nearestN = Binom.floor(n).toBigIntegerExact();
 				max = Binom.ceil(n).toBigIntegerExact(); 
-				n = n.subtract((n.subtract(new BigDecimal(min))).divide(new BigDecimal(2)));
+				n = n.subtract((n.subtract(new BigDecimal(min))).divide(DTWO));
 			} else {
 				min = Binom.floor(n).toBigIntegerExact();
-				n = n.add((new BigDecimal(max).subtract(n)).divide(new BigDecimal(2)));
+				n = n.add((new BigDecimal(max).subtract(n)).divide(DTWO));
 			}
 		}
 	}
@@ -118,10 +120,10 @@ public class CDF {
 					return Binom.floor(k).toBigIntegerExact();
 				nearestK = Binom.floor(k).toBigIntegerExact();
 				min = Binom.floor(k).toBigIntegerExact();
-				k = k.add((new BigDecimal(max).subtract(k)).divide(new BigDecimal(2)));
+				k = k.add((new BigDecimal(max).subtract(k)).divide(DTWO));
 			} else {
 				max = Binom.ceil(k).toBigIntegerExact();
-				k = k.subtract(k.subtract(new BigDecimal(min)).divide(new BigDecimal(2)));
+				k = k.subtract(k.subtract(new BigDecimal(min)).divide(DTWO));
 			}
 		}
 	}
@@ -137,7 +139,7 @@ public class CDF {
 	 */
 	public static BigDecimal reverseCDF_p(final String eq_n, final String eq_k, final String eq_P, final BigInteger accuracy) {
 		BigDecimal 	min = ZERO, max = ONE,
-					lastP = new BigDecimal(-1), nearestP = new BigDecimal(-1);
+					lastP = DNEG_ONE, lastProb = DNEG_ONE, nearestP = DNEG_ONE;
 		
 		final String paramName = "p";
 		final Equation 	n = new Equation(eq_n, paramName),
@@ -149,21 +151,25 @@ public class CDF {
 			BigInteger kEval = k.evaluateInt(p);
 			BigDecimal PEval = P.evaluateDouble(p);
 			
-			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
-						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()))),
-						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact()))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())));
-			if(p.compareTo(lastP) == 0) return nearestP;
+			BigDecimal 	rounded = Binom.round(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact())))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())),
+						floored = Binom.floor(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact())))).divide(BigDecimal.TEN.pow(accuracy.intValueExact())),
+						ceiled = Binom.ceil(p.multiply(new BigDecimal(BigInteger.TEN.pow(accuracy.intValueExact())))).divide(BigDecimal.TEN.pow(accuracy.intValueExact()));
+			
+			if(rounded.compareTo(lastP) == 0) return nearestP;
 			lastP = rounded;
 			BigDecimal prob = cdf(nEval, p, kEval);
 			if(prob.compareTo(PEval) >= 0) {
 				if(rounded == nearestP) return rounded;
 				nearestP = rounded;
 				min = floored;
-				p = p.add(max.subtract(p).divide(new BigDecimal(2)));
+				p = p.add(max.subtract(p).divide(DTWO));
 			} else {
 				max = ceiled;
-				p = p.subtract(p.subtract(min).divide(new BigDecimal(2)));
+				p = p.subtract(p.subtract(min).divide(DTWO));
 			}
+			if(prob.compareTo(lastProb) > 0)
+				nearestP = rounded;
+			lastProb = prob;
 		}
 	}
 	
