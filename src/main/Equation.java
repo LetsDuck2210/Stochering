@@ -5,18 +5,18 @@ import static java.math.BigDecimal.ZERO;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		MULT('*', (a, b) -> a.multiply(b)), DIV('/', (a,b) -> a.divide(b)), SUB('-', (a, b) -> a.subtract(b)), ADD('+', (a, b) -> a.add(b)), NOP('\0', (a,b) -> ZERO);
+		MULT('*', (a, b) -> a.multiply(b)), DIV('/', (a,b) -> a.divide(b, 10, RoundingMode.HALF_UP)), SUB('-', (a, b) -> a.subtract(b)), ADD('+', (a, b) -> a.add(b)), NOP('\0', (a,b) -> ZERO);
 		
 		private final char str;
 		private final BiFunction<BigDecimal, BigDecimal, BigDecimal> applyF;
 		private Operation(char c, BiFunction<BigDecimal, BigDecimal, BigDecimal> applyF) {
 			this.str = c;
 			this.applyF = applyF;
-			
 		}
 		public char character() {
 			return str;
@@ -32,7 +32,7 @@ public class Equation {
 	public Equation(String term, String paramName) {
 		this.term = term.trim();
 		this.paramName = paramName.trim();
-		if(term.isBlank()) {
+		if(this.term.isEmpty()) {
 			operation = Operation.NOP;
 			left = right = null;
 			return;
