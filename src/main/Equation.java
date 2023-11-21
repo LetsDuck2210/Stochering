@@ -10,7 +10,7 @@ import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		MULT('*', (a, b) -> a.multiply(b)), DIV('/', (a,b) -> a.divide(b, 10, RoundingMode.HALF_UP)), SUB('-', (a, b) -> a.subtract(b)), ADD('+', (a, b) -> a.add(b)), NOP('\0', (a,b) -> ZERO);
+		MULT('*', (a, b) -> a.multiply(b)), DIV('/', (a,b) -> a.divide(b, 100, RoundingMode.HALF_UP)), SUB('-', (a, b) -> a.subtract(b)), ADD('+', (a, b) -> a.add(b)), NOP('\0', (a,b) -> ZERO);
 		
 		private final char str;
 		private final BiFunction<BigDecimal, BigDecimal, BigDecimal> applyF;
