@@ -89,7 +89,7 @@ public class Main {
 	            	for(int i = 0; i < len; i++) {
 	            		System.out.print((i == 0 ? "{" : "") + Array.get(out, i) + (i < len - 1 ? ", " : "}\n"));
 	            	}
-	            } else if(out instanceof Number && outputAccuracy != -1) {
+	            } else if(out instanceof Double || out instanceof BigDecimal && outputAccuracy != -1) {
 	            	System.out.println(String.format("%." + outputAccuracy + "f", out).replaceAll("0*$", "").replaceAll("\\.$", ""));
 	            } else
 	            	System.out.println(out);
