@@ -1,7 +1,5 @@
 package main;
 
-import static java.math.BigDecimal.ZERO;
-
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -10,7 +8,13 @@ import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		MULT('*', (a, b) -> a.multiply(b)), DIV('/', (a,b) -> a.divide(b, 100, RoundingMode.HALF_UP)), SUB('-', (a, b) -> a.subtract(b)), ADD('+', (a, b) -> a.add(b)), NOP('\0', (a,b) -> ZERO);
+		EXP('^', (a,b) -> a.pow(b.intValue())), 
+		MULT('*', (a, b) -> a.multiply(b)), 
+		DIV('/', (a,b) -> a.divide(b, 100, RoundingMode.HALF_UP)), 
+		MOD('%', (a,b) -> a.divideAndRemainder(b)[1]), 
+		SUB('-', (a, b) -> a.subtract(b)), 
+		ADD('+', (a, b) -> a.add(b)), 
+		NOP('\0', (a, b) -> a);
 		
 		private final char str;
 		private final BiFunction<BigDecimal, BigDecimal, BigDecimal> applyF;
@@ -92,10 +96,19 @@ public class Equation {
 			String func = term.substring(0, term.indexOf('('));
 			String[] params = term.substring(term.indexOf('(') + 1, term.length() - 1).split(",\\s*");
 			try {
-				Object out = Main.invokeFunction(func, params);
-				return out;
+				return Main.invokeFunction(func, params);
 			} catch (InvocationTargetException | IllegalAccessException e) {
 				System.out.println("couldn't invoke function \"" + func + "\": " + e.getMessage());
+				if(e.getMessage() == null)
+					e.printStackTrace();
+				return null;
+			}
+		}
+		if(term.matches("[a-zA-Z]+")) {
+			try {
+				return Main.getField(term);
+			} catch(IllegalArgumentException | IllegalAccessException e) {
+				System.out.println("couldn't get field \"" + term + "\": " + e.getMessage());
 				if(e.getMessage() == null)
 					e.printStackTrace();
 				return null;

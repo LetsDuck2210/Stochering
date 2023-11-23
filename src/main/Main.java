@@ -3,6 +3,7 @@ package main;
 import static java.math.BigDecimal.ZERO;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import binom.Binom;
 import binom.CDF;
@@ -22,12 +25,12 @@ import main.commands.Help;
 import main.commands.OutputAccuracy;
 
 public class Main {
-	public static Map<String, Command> commands = Map.of(
-		"exit", new Exit(),
-		"help", new Help(),
-		"output_accuracy", new OutputAccuracy(),
-		"clear", new Clear()
-	);
+	public static Map<String, Command> commands = Stream.of(new Object[][] {
+		{ "exit", new Exit() },
+		{ "help", new Help() },
+		{ "output_accuracy", new OutputAccuracy() },
+		{ "clear", new Clear() }
+	}).collect(Collectors.toMap(data -> (String) data[0], data -> (Command) data[1]));
 	private static boolean running = true;
 	private static int outputAccuracy = 8;
 	
@@ -154,6 +157,27 @@ public class Main {
         Object out = matching.invoke(null, paramObjects);
         return out;
 	}
+	public static Object getField(String fuzzyName) throws IllegalArgumentException, IllegalAccessException {
+		Field[] fields = getAllFields();
+		
+		Field matching = null;
+		for(Field field : fields) {
+            if(matchesFuzzy(field.getName(), fuzzyName)) {
+            	if(matching != null) {
+            		System.out.println("ambiguous function name: matches " + matching.getName() + " and " + field.getName());
+            		return null;
+            	}
+                matching = field;
+            }
+        }
+        if(matching == null) {
+        	System.out.println("no function found for name " + fuzzyName);
+        	return null;
+        }
+        
+        return matching.get(null);
+	}
+	
 	private static Method[] getAllFunctions() {
 		Method[][] all = {
 			Binom.class.getMethods(),
@@ -166,6 +190,23 @@ public class Main {
 		for(int i = 0; i < all.length; i++) len += all[i].length;
 		
 		Method[] onedim = new Method[len];
+		for(int i = 0, f = 0; i < all.length; i++)
+			for(int j = 0; j < all[i].length; j++, f++)
+				onedim[f] = all[i][j];
+		return onedim;
+	}
+	private static Field[] getAllFields() {
+		Field[][] all = {
+			Binom.class.getFields(),
+			CDF.class.getFields(),
+			PDF.class.getFields(),
+			Math.class.getFields()
+		};
+
+		int len = 0;
+		for(int i = 0; i < all.length; i++) len += all[i].length;
+		
+		Field[] onedim = new Field[len];
 		for(int i = 0, f = 0; i < all.length; i++)
 			for(int j = 0; j < all[i].length; j++, f++)
 				onedim[f] = all[i][j];
