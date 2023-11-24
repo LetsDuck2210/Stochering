@@ -57,7 +57,7 @@ public class PDF {
 			BigInteger possibs = min.subtract(max).abs();
 			BigDecimal prob = pdf(n.toBigInteger(), pEval, kEval);
 			if(possibs.compareTo(new BigInteger("5")) <= 0)
-				println("n=" + n.toBigInteger() + ", pdf(n, p, k)=" + prob);
+				println("pdf(n=" + Binom.floor(n).toBigIntegerExact() + ", p=" + pEval + ", k=" + kEval + ")=" + prob);
 			
 			boolean inc; // increase or decrease n
 			if(prob.compareTo(PEval) <= 0) {
@@ -131,7 +131,7 @@ public class PDF {
 			BigDecimal prob = pdf(nEval, pEval, Binom.floor(k).toBigInteger());
 			BigInteger possibs = max.subtract(min);
 			if(possibs.compareTo(new BigInteger("5")) <= 0)
-				println("(" + (leftside ? "left" : "right") + ") k=" + Binom.floor(k).toBigInteger() + ", pdf(n, p, k)=" + prob);
+				println("(" + (leftside ? "left" : "right") + ") pdf(n=" + nEval + ", p=" + pEval + ", k=" + Binom.floor(k).toBigIntegerExact() + ")=" + prob);
 			
 			// increase on left side but decrease on right side if prob <= PEval
 			boolean inc = leftside;
