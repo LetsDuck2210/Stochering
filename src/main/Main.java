@@ -22,17 +22,23 @@ import main.commands.Clear;
 import main.commands.Command;
 import main.commands.Exit;
 import main.commands.Help;
-import main.commands.OutputAccuracy;
+import main.commands.OptionCmd;
+import main.options.Option;
+import main.options.OutputAccuracy;
+import main.options.Scale;
 
 public class Main {
 	public static Map<String, Command> commands = Stream.of(new Object[][] {
 		{ "exit", new Exit() },
 		{ "help", new Help() },
-		{ "output_accuracy", new OutputAccuracy() },
+		{ "option", new OptionCmd() },
 		{ "clear", new Clear() }
 	}).collect(Collectors.toMap(data -> (String) data[0], data -> (Command) data[1]));
+	public static Option<?>[] options = {
+		new OutputAccuracy(),
+		new Scale()
+	};
 	private static boolean running = true;
-	private static int outputAccuracy = 8;
 	
 	public static void main(String[] _a) {
 		Scanner sc = new Scanner(System.in);
@@ -92,8 +98,8 @@ public class Main {
 	            	for(int i = 0; i < len; i++) {
 	            		System.out.print((i == 0 ? "{" : "") + Array.get(out, i) + (i < len - 1 ? ", " : "}\n"));
 	            	}
-	            } else if(out instanceof Double || out instanceof BigDecimal && outputAccuracy != -1) {
-	            	System.out.println(String.format("%." + outputAccuracy + "f", out).replaceAll("0*$", "").replaceAll("\\.$", ""));
+	            } else if(out instanceof Double || out instanceof BigDecimal && Main.<Integer>getOption("output_accuracy") != -1) {
+	            	System.out.println(String.format("%." + getOption("output_accuracy") + "f", out).replaceAll("0*$", "").replaceAll("\\.$", ""));
 	            } else
 	            	System.out.println(out);
         	} catch(NumberFormatException e) {
@@ -109,11 +115,24 @@ public class Main {
 		running = false;
 	}
 	
-	public static void setOutputAccuracy(int accuracy) {
-		outputAccuracy = accuracy;
+	public static Object setOption(String name, Object value) {
+		for(int i = 0; i < options.length; i++)
+			if(options[i].name().equalsIgnoreCase(name) && options[i].type().isAssignableFrom(value.getClass()))
+				return options[i].set(value);
+		return null;
 	}
-	public static int getOutputAccuracy() {
-		return outputAccuracy;
+	@SuppressWarnings("unchecked")
+	public static <T> T getOption(String name) {
+		for(int i = 0; i < options.length; i++)
+			if(options[i].name().equalsIgnoreCase(name))
+				return (T) options[i].value();
+		return null;
+	}
+	public static Class<?> getOptionType(String name) {
+		for(int i = 0; i < options.length; i++)
+			if(options[i].name().equalsIgnoreCase(name))
+				return options[i].type();
+		return null;
 	}
 	public static boolean matchesFuzzy(String a, String b) {
 		String regex = "";

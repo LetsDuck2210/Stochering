@@ -10,7 +10,7 @@ public class Equation {
 	public enum Operation {
 		EXP('^', (a,b) -> a.pow(b.intValue())), 
 		MULT('*', (a, b) -> a.multiply(b)), 
-		DIV('/', (a,b) -> a.divide(b, 100, RoundingMode.HALF_UP)), 
+		DIV('/', (a,b) -> a.divide(b, Main.<Integer>getOption("scale"), RoundingMode.HALF_UP)), 
 		MOD('%', (a,b) -> a.divideAndRemainder(b)[1]), 
 		SUB('-', (a, b) -> a.subtract(b)), 
 		ADD('+', (a, b) -> a.add(b)), 
