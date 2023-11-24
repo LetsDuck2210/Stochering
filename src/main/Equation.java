@@ -8,10 +8,10 @@ import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		EXP('^', (a,b) -> a.pow(b.intValue())), 
+		POW('^', (a,b) -> a.pow(b.intValue())), 
 		MULT('*', (a, b) -> a.multiply(b)), 
 		DIV('/', (a,b) -> a.divide(b, Main.<Integer>getOption("scale"), RoundingMode.HALF_UP)), 
-		MOD('%', (a,b) -> a.divideAndRemainder(b)[1]), 
+		MOD_OR_PERCENT('%', (a,b) -> b.compareTo(BigDecimal.ZERO) != 0 ? a.divideAndRemainder(b)[1] : a.divide(new BigDecimal("100"))), 
 		SUB('-', (a, b) -> a.subtract(b)), 
 		ADD('+', (a, b) -> a.add(b)), 
 		NOP('\0', (a, b) -> a);
