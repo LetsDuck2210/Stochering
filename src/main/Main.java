@@ -93,6 +93,7 @@ public class Main {
 	            Equation eq = new Equation(op, "");
 	            Object out = eq.evaluate(ZERO);
 	            if(out == null) continue;
+	            CustomFields.ans = out;
 	            if(out.getClass().isArray()) {
 	            	int len = Array.getLength(out);
 	            	for(int i = 0; i < len; i++) {
@@ -219,7 +220,8 @@ public class Main {
 			Binom.class.getFields(),
 			CDF.class.getFields(),
 			PDF.class.getFields(),
-			Math.class.getFields()
+			Math.class.getFields(),
+			CustomFields.class.getFields()
 		};
 
 		int len = 0;

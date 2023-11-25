@@ -8,7 +8,7 @@ import java.util.function.BiFunction;
 
 public class Equation {
 	public enum Operation {
-		POW('^', (a,b) -> a.pow(b.intValue())), 
+		POW('^', (a,b) -> new BigDecimal(Math.pow(a.doubleValue(), b.doubleValue()))), 
 		MULT('*', (a, b) -> a.multiply(b)), 
 		DIV('/', (a,b) -> a.divide(b, Main.<Integer>getOption("scale"), RoundingMode.HALF_UP)), 
 		MOD_OR_PERCENT('%', (a,b) -> b.compareTo(BigDecimal.ZERO) != 0 ? a.divideAndRemainder(b)[1] : a.divide(new BigDecimal("100"))), 

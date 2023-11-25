@@ -22,7 +22,7 @@ public class OptionCmd implements Command {
 
 	@Override
 	public String desc() {
-		return "set decimal accuracy in output (-1 for infinite)";
+		return "change options";
 	}
 	
 }
