@@ -13,5 +13,8 @@ public class Exit implements Command {
 	public String desc() {
 		return "exit the program";
 	}
+	public String help() {
+		return "usage: /exit";
+	}
 	
 }

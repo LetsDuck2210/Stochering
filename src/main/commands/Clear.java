@@ -11,5 +11,8 @@ public class Clear implements Command {
 	public String desc() {
 		return "clear the screen";
 	}
+	public String help() {
+		return "usage: /clear";
+	}
 
 }
