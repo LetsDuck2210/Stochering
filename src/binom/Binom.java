@@ -33,11 +33,11 @@ public class Binom {
         if (k.compareTo(n.subtract(k)) > 0)
             k=n.subtract(k);
         
-        BigDecimal bk = new BigDecimal(k);
-        BigDecimal b = ONE;
-        for (BigDecimal i=ONE, m=new BigDecimal(n); i.compareTo(bk) <= 0; i=i.add(ONE), m=m.subtract(ONE))
+//        BigDecimal bk = new BigDecimal(k);
+        BigInteger b = BigInteger.ONE;
+        for (BigInteger i=BigInteger.ONE, m=new BigInteger("" + n); i.compareTo(k) <= 0; i=i.add(BigInteger.ONE), m=m.subtract(BigInteger.ONE))
             b=b.multiply(m).divide(i);
-        return b;
+        return new BigDecimal(b);
     }
 	public static BigDecimal pdf(final BigInteger n, final BigDecimal p, final BigInteger k) {
 		if(p.compareTo(ZERO) == 0) return (k.compareTo(BigInteger.ZERO) == 0 ? ONE : ZERO);

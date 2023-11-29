@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 
 public class Equation {
@@ -94,9 +96,10 @@ public class Equation {
 			return param;
 		if(term.matches("[a-zA-Z]+\\s*\\(.*\\)")) { // function
 			String func = term.substring(0, term.indexOf('('));
-			String[] params = term.substring(term.indexOf('(') + 1, term.length() - 1).split(",\\s*");
+			String paramStr = term.substring(term.indexOf('(') + 1, term.length() - 1);
+			
 			try {
-				return Main.invokeFunction(func, params);
+				return Main.invokeFunction(func, parseArgs(paramStr));
 			} catch (InvocationTargetException | IllegalAccessException e) {
 				System.out.println("couldn't invoke function \"" + func + "\": " + e.getMessage());
 				if(e.getMessage() == null)
@@ -123,5 +126,34 @@ public class Equation {
 	}
 	public BigInteger evaluateInt(BigDecimal param) {
 		return new BigInteger("" + ((Number) evaluate(param)).intValue());
+	}
+	
+	private static String[] parseArgs(String argStr) {
+		List<String> args = new ArrayList<>();
+		args.add("");
+		int totalLvl = 0, quote = 0;
+		for(int i = 0; i < argStr.length(); i++) {
+			char c = argStr.charAt(i);
+			
+			switch(c) {
+				case '(', '{', '[' -> totalLvl++;
+				case ')', '}', ']' -> totalLvl--;
+				case '"' -> quote ^= 2; // flip 2nd bit
+				case '\'' -> quote ^= 1; // flip 1st bit
+				case ',' -> { if(totalLvl == 0 && quote == 0) args.add(""); }
+			}
+			if(totalLvl < 0) {
+				System.out.println("unmatched closing character (')', '}', ']') at " + i);
+				return new String[0];
+			}
+
+			if(c != ',' || totalLvl != 0 || quote != 0)
+				args.set(args.size() - 1, args.get(args.size() - 1) + c);
+		}
+		if(quote != 0) {
+			System.out.println("unclosed quote in " + argStr);
+			return new String[0];
+		}
+		return args.toArray(new String[0]);
 	}
 }

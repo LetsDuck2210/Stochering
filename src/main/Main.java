@@ -66,7 +66,7 @@ public class Main {
 	            if(op.isEmpty())
 	            	continue;
 	            
-	            if(op.matches("\\/\\w+( \\\".*\\\"| [\\w\\d]*)*")) {
+	            if(op.matches("\\/[\\w_]+( \\\".*\\\"| [\\w\\d]*)*")) {
 	            	int space = op.indexOf(' ');
 	            	String 	command = op.substring(1, space < 0 ? op.length() : space),
 	            			argString = (op.contains(" ") ? op.substring((space + 1) > 0 ? space + 1 : op.length()) : "");
@@ -184,14 +184,14 @@ public class Main {
 		for(Field field : fields) {
             if(matchesFuzzy(field.getName(), fuzzyName)) {
             	if(matching != null) {
-            		System.out.println("ambiguous function name: matches " + matching.getName() + " and " + field.getName());
+            		System.out.println("ambiguous field name: matches " + matching.getName() + " and " + field.getName());
             		return null;
             	}
                 matching = field;
             }
         }
         if(matching == null) {
-        	System.out.println("no function found for name " + fuzzyName);
+        	System.out.println("no field found for name " + fuzzyName);
         	return null;
         }
         
