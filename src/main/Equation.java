@@ -90,6 +90,8 @@ public class Equation {
 	}
 	
 	public Object evaluate(BigDecimal param) {
+		if(this.term.isEmpty())
+			return 0;
 		if(left != null && right != null)
 			return operation.apply(left.evaluateDouble(param), right.evaluateDouble(param));
 		if(term.equals(paramName))
