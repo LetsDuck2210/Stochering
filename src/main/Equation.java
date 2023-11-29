@@ -94,7 +94,7 @@ public class Equation {
 			return operation.apply(left.evaluateDouble(param), right.evaluateDouble(param));
 		if(term.equals(paramName))
 			return param;
-		if(term.matches("[a-zA-Z]+\\s*\\(.*\\)")) { // function
+		if(term.matches("[a-zA-Z_]+\\s*\\(.*\\)")) { // function
 			String func = term.substring(0, term.indexOf('('));
 			String paramStr = term.substring(term.indexOf('(') + 1, term.length() - 1);
 			
@@ -107,7 +107,7 @@ public class Equation {
 				return null;
 			}
 		}
-		if(term.matches("[a-zA-Z]+")) {
+		if(term.matches("[a-zA-Z_]+")) {
 			try {
 				return Main.getField(term);
 			} catch(IllegalArgumentException | IllegalAccessException e) {
