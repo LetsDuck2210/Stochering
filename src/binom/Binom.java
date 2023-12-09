@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 
+import util.Gamma;
+
 public class Binom {
 	public static boolean quiet = false;
 	
@@ -33,7 +35,6 @@ public class Binom {
         if (k.compareTo(n.subtract(k)) > 0)
             k=n.subtract(k);
         
-//        BigDecimal bk = new BigDecimal(k);
         BigInteger b = BigInteger.ONE;
         for (BigInteger i=BigInteger.ONE, m=new BigInteger("" + n); i.compareTo(k) <= 0; i=i.add(BigInteger.ONE), m=m.subtract(BigInteger.ONE))
             b=b.multiply(m).divide(i);
@@ -46,15 +47,27 @@ public class Binom {
 		return bres;
 	}
 	public static BigDecimal cdf(final BigInteger n, final BigDecimal p, final BigInteger k) {
-		if(p.doubleValue() == 0) return (Binom.floor(new BigDecimal(k)).intValueExact() == 0 ? ONE : ZERO);
-		if(k.intValueExact() < 0) return ZERO;
-		if(n.intValueExact() <= 0) return ZERO;
-		
-		BigDecimal total = ZERO;
-		for(BigInteger i = BigInteger.ZERO; i.compareTo(k) <= 0; i=i.add(BigInteger.ONE)) {
-			total = total.add(pdf(n, p, i));
-		}
-		return total;
+		int ni = n.intValue();
+		double pd = p.doubleValue();
+		int ki = k.intValue();
+		double da, db, dp;
+        //        int ia, ib;
+
+        if (ki < 0) {
+            dp = 0.0;
+        } else if (ki >= ni) {
+            dp = 1.0;
+        } else if (pd == 0.0) {
+            dp = (ki < 0) ? 0.0 : 1.0;
+        } else if (pd == 1.0) {
+            dp = (ki < ni) ? 0.0 : 1.0;
+        } else {
+            da = (double) ki + 1.0;
+            db = (double) (ni - ki);
+            dp = 1.0 - Gamma.betaCdf(pd, da, db);
+        }
+
+        return new BigDecimal(dp);
 	}
 	public static BigInteger expect(final BigInteger n, final BigDecimal p, Event prob) {
 		BigDecimal e = new BigDecimal(n).multiply(p);
