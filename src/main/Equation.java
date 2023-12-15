@@ -47,10 +47,7 @@ public class Equation {
 		int level = 0;
 		String left = "", right = "";
 		boolean parsingRight = false;
-		if(this.term.startsWith("(") && this.term.endsWith(")")) {
-			// cut '(' and ')' from start and end
-			this.term = term = this.term.substring(1, this.term.length() - 1);
-		}
+		this.term = term = cutParenthesis(this.term);
 		
 		outer:
 		for(int i = 0; i < term.length(); i++) {
@@ -80,7 +77,7 @@ public class Equation {
 		}
 		if(operation == Operation.NOP) return;
 		this.left = new Equation(left, paramName);
-		this.right = new Equation(right, paramName);
+		this.right = new Equation(right, paramName);this.term.substring(1, this.term.length() - 1);
 	}
 	public Equation(Number n) {
 		term = "" + n;
@@ -129,7 +126,30 @@ public class Equation {
 	public BigInteger evaluateInt(BigDecimal param) {
 		return new BigInteger("" + ((Number) evaluate(param)).intValue());
 	}
-	
+
+	/** cut '(' and ')' from start and end
+	 * 
+	 * @param orig originial string
+	 */
+	private static String cutParenthesis(String orig) {
+		while(orig.matches("\\(.*\\)")) {
+			for(int i = 0, level = 0; i < orig.length(); i++) {
+				char c = orig.charAt(i);
+				if(c == '(') level++;
+				if(c == ')') { 
+					level--;
+					if(level == 0) {
+						if(i == orig.length() - 1) {
+							orig = orig.substring(1, i);
+							continue;
+						} else
+							return orig;
+					}
+				}
+			}
+		}
+		return orig;
+	}
 	private static String[] parseArgs(String argStr) {
 		List<String> args = new ArrayList<>();
 		args.add("");
